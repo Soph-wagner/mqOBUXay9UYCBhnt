@@ -1,0 +1,77 @@
+'''
+Author: Sophia Wagner
+Date: 7/14/2024
+Description: using lazypredict python package to test multiple models on the Term Deposit dataset
+'''
+
+#our target variable is categorical, so we will use a classification model
+
+
+# import libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from lazypredict.Supervised import LazyClassifier
+
+# load in data
+all_data = pd.read_csv('term-deposit-marketing-2020.csv')
+one_hot_data = pd.read_csv('one-hot-term-deposit-data.csv')
+no_call_data = pd.read_csv('no-call-one-hot-term-deposit-data.csv')
+
+# quick look at the data
+print(all_data.head(5))         #size: 40000 x 14 (including target var)
+print(one_hot_data.head(5))     #size: 40000 x 35 (including target var)
+print(no_call_data.head(5))     #size: 40000 x 28 (including target var)
+
+#splitting the data into features and target variable
+X_all = all_data.iloc[:, 0:12].values #complete dataset, all features, NOT one-hot encoded
+y_all = all_data.iloc[:, 13].values
+print(X_all)
+print(y_all)
+X_one_hot = one_hot_data.drop('y', axis=1).values #complete dataset, one-hot encoded version
+y_one_hot = one_hot_data['y'].values 
+print(X_one_hot)
+print(y_one_hot)
+X_no_call = no_call_data.drop('y', axis=1).values #NO call related features, one-hot encoded version
+y_no_call = no_call_data['y'].values
+print(X_no_call)
+print(y_no_call)
+
+# creating a train test split for each dataset
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_all, y_all, test_size = 0.2, random_state=2)
+
+X_train_one_hot, X_test_one_hot, y_train_one_hot, y_test_one_hot = train_test_split(X_one_hot, y_one_hot, test_size = 0.2, random_state=2)
+
+X_train_no_call, X_test_no_call, y_train_no_call, y_test_no_call = train_test_split(X_no_call, y_no_call, test_size = 0.2, random_state=2)
+
+#want to count up the number of 'yes' and 'no' in y_train_all and y_test_all
+
+# count the number of 'yes' and 'no' in y_train_all
+print(f"complete dataset, Train class counts: 'yes'={sum(y_train_all == 'yes')}, 'no'={sum(y_train_all == 'no')}")
+print(f"complete dataset, Test class counts: 'yes'={sum(y_test_all == 'yes')}, 'no'={sum(y_test_all == 'no')}")
+
+#total entries in y_train_all and y_test_all
+print(f"total # of entries in train split: {len(y_train_all)}")
+print(f"total # of entries in test split: {len(y_test_all)}")
+
+#printing number of yes and no in the target variable for each dataset
+print(f"one-hot dataset, Train class counts: 'yes'={sum(y_train_one_hot == 1)}, 'no'={sum(y_train_one_hot == 0)}")
+print(f"one-hot dataset, Test class counts: 'yes'={sum(y_test_one_hot == 1)}, 'no'={sum(y_test_one_hot == 0)}")
+print(f"no call dataset Train class counts: 'yes'={sum(y_train_no_call == 1)}, 'no'={sum(y_train_no_call == 0)}")
+print(f"no call dataset Train class counts: 'yes'={sum(y_test_no_call == 1)}, 'no'={sum(y_test_no_call == 0)}")
+
+# fitting lazy classifier
+all_clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
+model_all, predictions_all = all_clf.fit(X_train_all, X_test_all, y_train_all, y_test_all)
+
+one_hot_clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
+model_one_hot, predictions_one_hot = one_hot_clf.fit(X_train_one_hot, X_test_one_hot, y_train_one_hot, y_test_one_hot)
+
+no_call_clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
+model_no_call, predictions_no_call = no_call_clf.fit(X_train_no_call, X_test_no_call, y_train_no_call, y_test_no_call)
+
+print(f"performance of the complete dataset: \n{model_all}")
+
+print(f"performance of the one-hot encoded complete dataset: \n{model_one_hot}")
+
+print(f"performance of the no call features one-hot encoded dataset: \n{model_no_call}")
